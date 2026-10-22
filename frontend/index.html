@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Pharmacy - AI-Powered Assistant & Operations</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <!-- Prominent Safety Disclaimer Banner -->
+  <div class="safety-banner" id="safety-banner">
+    <span class="shield-icon">🛡️</span>
+    <span>SAFETY NOTICE: This platform assists pharmacy operations and does not provide medical advice. All prescriptions require mandatory review and approval by a licensed pharmacist before fulfillment.</span>
+  </div>
+
+  <!-- Navigation Bar -->
+  <header>
+    <div class="nav-container">
+      <a href="#/medicines" class="brand">
+        <span class="logo-icon">💊</span>
+        <span>SmartPharmacy</span>
+      </a>
+
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <!-- Populated dynamically by main.ts -->
+        </ul>
+      </nav>
+
+      <div class="user-menu" id="user-menu">
+        <!-- Populated dynamically by main.ts -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main id="app">
+    <div style="text-align: center; padding: 40px;">Loading Smart Pharmacy...</div>
+  </main>
+
+  <!-- Global Modal Host -->
+  <div id="modal-container"></div>
+
+  <!-- Footer -->
+  <footer>
+    <p><strong>AI-Powered Smart Pharmacy and Prescription Assistant</strong> &bull; University Capstone Project</p>
+    <p style="margin-top: 4px; font-size: 0.8rem;">Assists licensed pharmacists with OCR transcription &amp; validation &bull; Never diagnoses, prescribes, or alters treatments.</p>
+  </footer>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
