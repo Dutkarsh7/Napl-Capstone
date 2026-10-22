@@ -19,14 +19,14 @@ type PrescriptionJob struct {
 }
 
 type WorkerPool struct {
-	store      db.Store
-	ocrClient  *ocrclient.Client
-	fsClient   *fsclient.Client
-	jobQueue   chan PrescriptionJob
+	store       db.Store
+	ocrClient   *ocrclient.Client
+	fsClient    *fsclient.Client
+	jobQueue    chan PrescriptionJob
 	workerCount int
-	wg         sync.WaitGroup
-	ctx        context.Context
-	cancel     context.CancelFunc
+	wg          sync.WaitGroup
+	ctx         context.Context
+	cancel      context.CancelFunc
 }
 
 func NewWorkerPool(store db.Store, ocr *ocrclient.Client, fs *fsclient.Client, workerCount, queueCap int) *WorkerPool {
@@ -89,7 +89,18 @@ func (wp *WorkerPool) processJob(job PrescriptionJob) {
 	jobCtx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
 	defer cancel()
 
-	// 1. OCR Extraction
+	// 1. OCR Extraction (Resilient to nil client or network error)
+	if wp.ocrClient == nil {
+		log.Printf("[WorkerPool] No OCR client configured for %s -> Defaulting to MANUAL_REVIEW", job.PrescriptionID)
+		_ = wp.store.UpdatePrescriptionValidation(
+			context.Background(),
+			job.PrescriptionID,
+			"(OCR service not configured. Pharmacist manual review required)",
+			models.ValidationManualReview,
+		)
+		return
+	}
+
 	extractedText, err := wp.ocrClient.ExtractText(jobCtx, job.FilePath)
 	if err != nil {
 		log.Printf("[WorkerPool] OCR service unreachable or failed for %s: %v -> Defaulting to MANUAL_REVIEW", job.PrescriptionID, err)
@@ -102,10 +113,21 @@ func (wp *WorkerPool) processJob(job PrescriptionJob) {
 		return
 	}
 
-	// 2. Parse text with naive regex parser
+	// 2. Parse text with regex parser
 	parsed := ParsePrescriptionText(extractedText)
 
-	// 3. Validate with F# microservice
+	// 3. Validate with F# microservice (Resilient to nil client or network error)
+	if wp.fsClient == nil {
+		log.Printf("[WorkerPool] No F# validation client configured for %s -> Defaulting to MANUAL_REVIEW", job.PrescriptionID)
+		_ = wp.store.UpdatePrescriptionValidation(
+			context.Background(),
+			job.PrescriptionID,
+			extractedText,
+			models.ValidationManualReview,
+		)
+		return
+	}
+
 	valResp, err := wp.fsClient.Validate(jobCtx, parsed)
 	if err != nil {
 		log.Printf("[WorkerPool] F# validation service unreachable or failed for %s: %v -> Defaulting to MANUAL_REVIEW", job.PrescriptionID, err)
@@ -131,7 +153,6 @@ func (wp *WorkerPool) processJob(job PrescriptionJob) {
 		valStatus = models.ValidationManualReview
 	}
 
-	// Note: ReviewStatus remains PENDING. Validation is strictly human-in-the-loop assistance.
 	if err := wp.store.UpdatePrescriptionValidation(context.Background(), job.PrescriptionID, extractedText, valStatus); err != nil {
 		log.Printf("[WorkerPool] Error saving validation result for %s: %v", job.PrescriptionID, err)
 		return
