@@ -33,51 +33,29 @@ A full-stack, distributed pharmacy management and prescription verification assi
 
 ```
 smart-pharmacy/
-├── backend-go/                # Go REST API & worker pool
-│   ├── cmd/server/main.go     # Server entry point, ServeMux 1.22 routing
-│   ├── internal/
-│   │   ├── config/            # Environment configuration loader
-│   │   ├── db/                # PostgreSQL pgxpool & in-memory stores
-│   │   ├── fsclient/          # HTTP client for F# validation service
-│   │   ├── handlers/          # Auth, Medicines, Prescriptions, Orders, Admin
-│   │   ├── middleware/        # JWT auth, role enforcement, CORS, logger
-│   │   ├── models/            # Domain models, transitions, and OCR structures
-│   │   ├── ocrclient/         # HTTP client for Python OCR service
-│   │   └── services/          # Regex text parser, worker pool, transition helpers
-│   ├── tests/                 # Unit & httptest test suite
-│   ├── Dockerfile
-│   └── go.mod
-├── validation-fsharp/         # F# Giraffe domain validation microservice
-│   ├── Domain.fs              # Discriminated unions & records
-│   ├── Rules.fs               # Pure immutable validation rules
-│   ├── Api.fs                 # Giraffe HTTP handlers
-│   ├── Program.fs             # ASP.NET Core host
-│   ├── Tests/                 # Expecto unit test project (23 tests)
-│   ├── Dockerfile
-│   └── PharmacyValidation.fsproj
-├── ocr-python/                # Python FastAPI OCR microservice
-│   ├── main.py                # FastAPI app with pytesseract & fallback
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/                  # TypeScript + Vite SPA
-│   ├── index.html             # Entry point with safety disclaimer banner
-│   ├── src/
-│   │   ├── api.ts             # API client with token storage
-│   │   ├── cart.ts            # Cart store with Rx tracking
-│   │   ├── types.ts           # Complete TypeScript interfaces
-│   │   ├── main.ts            # Hash router & navbar controller
-│   │   ├── pages/             # Auth, Medicines, Cart, Prescriptions, Orders, Staff, Admin
-│   │   └── tests/             # Vitest test suite
-│   ├── styles.css             # Responsive CSS with custom variables
-│   ├── vite.config.ts
-│   └── Dockerfile
-├── db/migrations/             # PostgreSQL migrations
-│   ├── 001_init.sql           # Schema DDL (users, medicines, prescriptions, orders, history)
-│   └── 002_seed.sql           # 105 realistic medicines + 3 demo user accounts
-├── docs/                      # Technical documentation
-│   ├── API.md                 # Full REST API specification
-│   └── TEST_CASES.md          # 53-item test case matrix
-├── docker-compose.yml         # Multi-service container orchestration
+├── apps/
+│   ├── backend/                  # Go REST API & worker pool
+│   │   ├── cmd/                  # Server and end-to-end entry points
+│   │   ├── internal/             # Private application packages
+│   │   ├── tests/                # Unit and HTTP handler tests
+│   │   ├── Dockerfile
+│   │   └── go.mod
+│   └── frontend/                 # TypeScript + Vite SPA
+│       ├── src/                  # API client, pages, state, and tests
+│       ├── Dockerfile
+│       └── package.json
+├── services/
+│   ├── validation/              # F# Giraffe domain validation service
+│   └── ocr/                     # Python FastAPI OCR service
+├── infra/
+│   └── database/migrations/     # PostgreSQL schema and seed migrations
+├── tests/
+│   └── fixtures/prescriptions/  # Sample prescription fixtures
+├── docs/                        # Technical documentation
+│   ├── API.md
+│   └── TEST_CASES.md
+├── docker-compose.yml          # Multi-service container orchestration
+├── scripts/start-all.ps1       # Windows local-development launcher
 ├── .env.example               # Environment variables template
 └── README.md                  # This comprehensive guide
 ```
@@ -120,14 +98,14 @@ You can run each service independently in standard PowerShell terminals.
 
 ### 1. F# Validation Service
 ```powershell
-cd smart-pharmacy\validation-fsharp
+cd services\validation
 dotnet run
 ```
 *Listens on `http://localhost:5005`*.
 
 ### 2. Python OCR Microservice
 ```powershell
-cd smart-pharmacy\ocr-python
+cd services\ocr
 pip install -r requirements.txt
 python main.py
 ```
@@ -136,14 +114,14 @@ python main.py
 ### 3. Go Backend
 If running without a local PostgreSQL instance, the Go backend will automatically detect this and initialize a high-performance, thread-safe in-memory store pre-seeded with all 105 realistic medicines and demo users:
 ```powershell
-cd smart-pharmacy\backend-go
+cd apps\backend
 go run .\cmd\server
 ```
 *Listens on `http://localhost:8080`*.
 
 ### 4. Frontend (TypeScript + Vite)
 ```powershell
-cd smart-pharmacy\frontend
+cd apps\frontend
 npm run dev
 ```
 *Opens at `http://localhost:5173`*.
@@ -155,21 +133,21 @@ npm run dev
 ### 1. Go Backend Tests (37 Unit & Handler Tests)
 Tests state machine transitions, stock decrement/cancellation concurrency logic, file upload content sniffing, JWT authentication middleware, and REST handlers:
 ```powershell
-cd smart-pharmacy\backend-go
+cd apps\backend
 go test -v ./...
 ```
 
 ### 2. F# Expecto Tests (23 Domain Validation Tests)
 Tests pure immutable domain rules covering `Valid`, `Incomplete`, and `Invalid` cases, boundary quantities (1 and 30), date ranges, and controlled opioid keyword detection:
 ```powershell
-cd smart-pharmacy\validation-fsharp\Tests
+cd services\validation\Tests
 dotnet test
 ```
 
 ### 3. Frontend Vitest Tests (8 Client & Cart Tests)
 Tests cart calculations, Rx prescription requirement tracking, and API auth token persistence:
 ```powershell
-cd smart-pharmacy\frontend
+cd apps\frontend
 npm test
 ```
 
