@@ -107,12 +107,15 @@ class ApiClient {
   }
 
   // Medicines
-  public async getMedicines(query: string = '', page: number = 1, limit: number = 20): Promise<MedicinesListResponse> {
+  public async getMedicines(query: string = '', page: number = 1, limit: number = 20, rx?: boolean | null): Promise<MedicinesListResponse> {
     const params = new URLSearchParams({
       q: query,
       page: page.toString(),
       limit: limit.toString(),
     });
+    if (rx !== undefined && rx !== null) {
+      params.append('rx', rx ? 'true' : 'false');
+    }
     return this.request<MedicinesListResponse>(`/medicines?${params.toString()}`);
   }
 

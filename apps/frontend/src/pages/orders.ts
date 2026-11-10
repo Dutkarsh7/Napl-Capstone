@@ -67,7 +67,7 @@ function renderOrderCard(order: Order): string {
           </div>
         </div>
         <div style="text-align: right;">
-          <div class="price" style="margin-bottom: 4px;">$${order.total.toFixed(2)}</div>
+          <div class="price" style="margin-bottom: 4px;">₹${order.total.toFixed(2)}</div>
           <span class="badge ${getStatusBadgeClass(order.status)}">${order.status}</span>
         </div>
       </div>
@@ -114,8 +114,8 @@ function renderOrderCard(order: Order): string {
                     ${it.requires_rx ? '<span class="badge badge-rx" style="margin-left: 6px;">Rx</span>' : ''}
                   </td>
                   <td>${it.quantity}</td>
-                  <td>$${it.unit_price.toFixed(2)}</td>
-                  <td>$${(it.unit_price * it.quantity).toFixed(2)}</td>
+                  <td>₹${it.unit_price.toFixed(2)}</td>
+                  <td>₹${(it.unit_price * it.quantity).toFixed(2)}</td>
                 </tr>
               `).join('')}
             </tbody>

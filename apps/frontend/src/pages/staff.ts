@@ -220,7 +220,7 @@ async function renderOrderFulfillment(container: HTMLElement) {
                     <div style="font-size: 0.78rem; color: var(--text-muted);">${escapeHtml(o.customer_email || '')}</div>
                   </td>
                   <td>${new Date(o.created_at).toLocaleDateString()}</td>
-                  <td style="font-weight: 700;">$${o.total.toFixed(2)}</td>
+                  <td style="font-weight: 700;">₹${o.total.toFixed(2)}</td>
                   <td>
                     <span class="badge ${o.status === 'COMPLETED' ? 'badge-otc' : o.status === 'CANCELLED' ? 'badge-rx' : 'badge-warning'}">
                       ${o.status}
@@ -307,7 +307,7 @@ async function renderInventoryControl(container: HTMLElement) {
               <th>Medicine Name</th>
               <th>Generic Name</th>
               <th>Type</th>
-              <th>Price ($)</th>
+              <th>Price (₹)</th>
               <th>Stock Qty</th>
               <th>Save</th>
             </tr>

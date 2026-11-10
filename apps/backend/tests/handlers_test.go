@@ -89,6 +89,50 @@ func TestHandlersHTTP(t *testing.T) {
 		}
 	})
 
+	t.Run("Medicines catalogue filters by rx=false (OTC items only)", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/medicines?rx=false&page=1&limit=20", nil)
+		rec := httptest.NewRecorder()
+
+		medH.List(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK, got %d", rec.Code)
+		}
+
+		var listRes handlers.MedicinesListResponse
+		_ = json.NewDecoder(rec.Body).Decode(&listRes)
+		if len(listRes.Data) == 0 {
+			t.Fatal("expected OTC items, got 0")
+		}
+		for _, item := range listRes.Data {
+			if item.RequiresRx {
+				t.Errorf("expected only OTC items (requires_rx=false), got Rx item: %s", item.Name)
+			}
+		}
+	})
+
+	t.Run("Medicines catalogue filters by rx=true (Rx items only)", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/medicines?rx=true&page=1&limit=20", nil)
+		rec := httptest.NewRecorder()
+
+		medH.List(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK, got %d", rec.Code)
+		}
+
+		var listRes handlers.MedicinesListResponse
+		_ = json.NewDecoder(rec.Body).Decode(&listRes)
+		if len(listRes.Data) == 0 {
+			t.Fatal("expected Rx items, got 0")
+		}
+		for _, item := range listRes.Data {
+			if !item.RequiresRx {
+				t.Errorf("expected only Rx items (requires_rx=true), got OTC item: %s", item.Name)
+			}
+		}
+	})
+
 	t.Run("Admin update role changes user role", func(t *testing.T) {
 		cust, err := store.GetUserByEmail(context.Background(), "customer@pharmacy.local")
 		if err != nil {

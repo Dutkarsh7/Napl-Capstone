@@ -7,6 +7,7 @@ import { renderPrescriptionsPage } from './pages/prescriptions';
 import { renderOrdersPage } from './pages/orders';
 import { renderStaffPage } from './pages/staff';
 import { renderAdminPage } from './pages/admin';
+import { renderDashboardPage } from './pages/dashboard';
 
 const app = document.getElementById('app') as HTMLElement;
 const navLinksContainer = document.getElementById('nav-links') as HTMLElement;
@@ -17,7 +18,15 @@ function updateNavigation() {
   const cartCount = cart.getItemCount();
   const currentHash = window.location.hash || '#/medicines';
 
-  let linksHtml = `
+  let linksHtml = '';
+
+  if (user) {
+    linksHtml += `
+      <li><a href="#/dashboard" class="${currentHash.startsWith('#/dashboard') ? 'active' : ''}">Dashboard</a></li>
+    `;
+  }
+
+  linksHtml += `
     <li><a href="#/medicines" class="${currentHash.startsWith('#/medicines') ? 'active' : ''}">Medicines</a></li>
   `;
 
@@ -82,6 +91,8 @@ function handleRoute() {
     renderAuthPage(app, false);
   } else if (hash.startsWith('#/register')) {
     renderAuthPage(app, true);
+  } else if (hash.startsWith('#/dashboard')) {
+    renderDashboardPage(app);
   } else if (hash.startsWith('#/cart')) {
     renderCartPage(app);
   } else if (hash.startsWith('#/prescriptions')) {

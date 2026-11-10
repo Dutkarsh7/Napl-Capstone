@@ -74,7 +74,7 @@ export async function renderCartPage(container: HTMLElement) {
                       ${item.medicine.requires_rx ? 'Rx Required' : 'OTC'}
                     </span>
                   </td>
-                  <td>$${item.medicine.price.toFixed(2)}</td>
+                  <td>₹${item.medicine.price.toFixed(2)}</td>
                   <td>
                     <div style="display: flex; align-items: center; gap: 6px;">
                       <button class="btn btn-outline btn-sm dec-btn" data-id="${item.medicine.medicine_id}">-</button>
@@ -82,7 +82,7 @@ export async function renderCartPage(container: HTMLElement) {
                       <button class="btn btn-outline btn-sm inc-btn" data-id="${item.medicine.medicine_id}">+</button>
                     </div>
                   </td>
-                  <td style="font-weight: 700;">$${(item.medicine.price * item.quantity).toFixed(2)}</td>
+                  <td style="font-weight: 700;">₹${(item.medicine.price * item.quantity).toFixed(2)}</td>
                   <td>
                     <button class="btn btn-outline btn-sm remove-btn" data-id="${item.medicine.medicine_id}" style="color: var(--danger); border-color: #fca5a5;">
                       Remove
@@ -98,7 +98,7 @@ export async function renderCartPage(container: HTMLElement) {
         <div class="card" style="padding: 24px;">
           <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 800; margin-bottom: 16px;">
             <span>Order Total:</span>
-            <span class="price">$${total.toFixed(2)}</span>
+            <span class="price">₹${total.toFixed(2)}</span>
           </div>
 
           ${requiresRx ? `
@@ -127,7 +127,7 @@ export async function renderCartPage(container: HTMLElement) {
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
             <a href="#/medicines" class="btn btn-outline">&larr; Continue Shopping</a>
             <button id="checkout-btn" class="btn btn-primary" style="padding: 10px 24px;">
-              Place Order ($${total.toFixed(2)})
+              Place Order (₹${total.toFixed(2)})
             </button>
           </div>
         </div>
@@ -203,7 +203,7 @@ export async function renderCartPage(container: HTMLElement) {
           errorDiv.textContent = err.message || 'Failed to place order';
           errorDiv.style.display = 'block';
           checkoutBtn.disabled = false;
-          checkoutBtn.textContent = `Place Order ($${total.toFixed(2)})`;
+          checkoutBtn.textContent = `Place Order (₹${total.toFixed(2)})`;
         }
       });
     }

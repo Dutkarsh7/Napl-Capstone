@@ -7,12 +7,12 @@ import (
 )
 
 var (
-	ErrNotFound           = errors.New("record not found")
-	ErrConflict           = errors.New("record already exists")
-	ErrInsufficientStock  = errors.New("insufficient stock for medicine")
-	ErrRxPrescriptionReq  = errors.New("prescription required for one or more items: approved prescription owned by user is mandatory")
+	ErrNotFound            = errors.New("record not found")
+	ErrConflict            = errors.New("record already exists")
+	ErrInsufficientStock   = errors.New("insufficient stock for medicine")
+	ErrRxPrescriptionReq   = errors.New("prescription required for one or more items: approved prescription owned by user is mandatory")
 	ErrInvalidTransition  = errors.New("invalid order status transition")
-	ErrPrescriptionNotOwn = errors.New("prescription not found or not owned by user")
+	ErrPrescriptionNotOwn  = errors.New("prescription not found or not owned by user")
 )
 
 type Store interface {
@@ -24,7 +24,7 @@ type Store interface {
 	UpdateUserRole(ctx context.Context, id string, role models.UserRole) error
 
 	// Medicines
-	ListMedicines(ctx context.Context, query string, page, limit int) ([]models.Medicine, int, error)
+	ListMedicines(ctx context.Context, query string, rxFilter *bool, page, limit int) ([]models.Medicine, int, error)
 	GetMedicineByID(ctx context.Context, id string) (*models.Medicine, error)
 	CreateMedicine(ctx context.Context, m *models.Medicine) error
 	UpdateMedicine(ctx context.Context, m *models.Medicine) error

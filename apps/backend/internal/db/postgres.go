@@ -137,7 +137,7 @@ func (s *PostgresStore) UpdateUserRole(ctx context.Context, id string, role mode
 
 // Medicines
 
-func (s *PostgresStore) ListMedicines(ctx context.Context, query string, page, limit int) ([]models.Medicine, int, error) {
+func (s *PostgresStore) ListMedicines(ctx context.Context, query string, rxFilter *bool, page, limit int) ([]models.Medicine, int, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -151,8 +151,9 @@ func (s *PostgresStore) ListMedicines(ctx context.Context, query string, page, l
 		SELECT COUNT(*)
 		FROM medicines
 		WHERE ($1 = '' OR name ILIKE '%' || $1 || '%' OR generic_name ILIKE '%' || $1 || '%')
+		  AND ($2::boolean IS NULL OR requires_rx = $2)
 	`
-	if err := s.pool.QueryRow(ctx, countQuery, query).Scan(&total); err != nil {
+	if err := s.pool.QueryRow(ctx, countQuery, query, rxFilter).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
@@ -160,10 +161,11 @@ func (s *PostgresStore) ListMedicines(ctx context.Context, query string, page, l
 		SELECT medicine_id, name, generic_name, description, price, stock_qty, requires_rx, created_at
 		FROM medicines
 		WHERE ($1 = '' OR name ILIKE '%' || $1 || '%' OR generic_name ILIKE '%' || $1 || '%')
+		  AND ($2::boolean IS NULL OR requires_rx = $2)
 		ORDER BY name ASC
-		LIMIT $2 OFFSET $3
+		LIMIT $3 OFFSET $4
 	`
-	rows, err := s.pool.Query(ctx, dataQuery, query, limit, offset)
+	rows, err := s.pool.Query(ctx, dataQuery, query, rxFilter, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -363,6 +365,23 @@ func (s *PostgresStore) CreateOrderWithItems(ctx context.Context, userID string,
 	if len(items) == 0 {
 		return nil, errors.New("order must contain at least one item")
 	}
+
+	// Consolidate duplicate items for the same medicine_id
+	consolidated := make(map[string]int)
+	for _, it := range items {
+		if it.Quantity <= 0 {
+			return nil, errors.New("quantity must be greater than zero")
+		}
+		consolidated[it.MedicineID] += it.Quantity
+	}
+	var distinctItems []models.CreateOrderItemRequest
+	for medID, qty := range consolidated {
+		distinctItems = append(distinctItems, models.CreateOrderItemRequest{
+			MedicineID: medID,
+			Quantity:   qty,
+		})
+	}
+	items = distinctItems
 
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {

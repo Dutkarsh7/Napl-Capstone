@@ -50,7 +50,7 @@ func SeedMemoryStore(m *MemoryStore) {
 		},
 		{
 			UserID:       "33333333-3333-3333-3333-333333333333",
-			Name:         "John Doe (Customer)",
+			Name:         "Utkarsh Ans",
 			Email:        "customer@pharmacy.local",
 			PasswordHash: "$2a$10$.mFgHZ1EBw9x1YOhsyRzAuHTzu7bs0mftMKn8k74LtSU6h72U/mqC",
 			Role:         models.RoleCustomer,

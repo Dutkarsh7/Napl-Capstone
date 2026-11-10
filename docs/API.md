@@ -83,7 +83,7 @@ Common status codes:
   ```json
   {
     "user_id": "33333333-3333-3333-3333-333333333333",
-    "name": "John Doe (Customer)",
+    "name": "Utkarsh Ans",
     "email": "customer@pharmacy.local",
     "role": "customer",
     "created_at": "2026-10-22T00:00:00Z"

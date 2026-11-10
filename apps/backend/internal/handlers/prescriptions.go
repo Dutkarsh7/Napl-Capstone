@@ -167,6 +167,9 @@ func (h *PrescriptionsHandler) Queue(w http.ResponseWriter, r *http.Request) {
 		JSONError(w, http.StatusInternalServerError, "Failed to load prescription review queue")
 		return
 	}
+	if prescriptions == nil {
+		prescriptions = []models.Prescription{}
+	}
 
 	JSONResponse(w, http.StatusOK, prescriptions)
 }

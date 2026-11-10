@@ -77,6 +77,102 @@ export function renderMedicinesPage(container: HTMLElement) {
     }
   };
 
+  const showMedicineModal = (med: Medicine) => {
+    const isOutOfStock = med.stock_qty <= 0;
+    const isLowStock = med.stock_qty > 0 && med.stock_qty <= 10;
+    const stockClass = isOutOfStock ? 'out-of-stock' : isLowStock ? 'low-stock' : 'in-stock';
+    const stockLabel = isOutOfStock ? 'Out of Stock' : isLowStock ? `Low Stock (${med.stock_qty} left)` : `In Stock (${med.stock_qty} units)`;
+
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.id = 'med-details-modal';
+    modalOverlay.innerHTML = `
+      <div class="modal-content" style="max-width: 520px; border-top: 4px solid ${med.requires_rx ? 'var(--warning)' : 'var(--primary)'};">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+              <span class="badge ${med.requires_rx ? 'badge-rx' : 'badge-otc'}">
+                ${med.requires_rx ? 'Rx Required' : 'OTC'}
+              </span>
+              <span class="badge-stock ${stockClass}">
+                ${stockLabel}
+              </span>
+            </div>
+            <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0;">${escapeHtml(med.name)}</h2>
+            <div style="color: var(--text-muted); font-size: 0.9rem; margin-top: 2px;">
+              Active Generic: <strong>${escapeHtml(med.generic_name)}</strong>
+            </div>
+          </div>
+          <button id="close-med-modal" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 1.1rem; line-height: 1;">&times;</button>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px;">Clinical Description</h4>
+          <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-main); background: #f8fafc; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            ${escapeHtml(med.description || 'Standard pharmaceutical grade preparation. Store at controlled room temperature.')}
+          </p>
+        </div>
+
+        ${
+          med.requires_rx
+            ? `
+          <div class="alert alert-warning" style="margin-bottom: 20px; font-size: 0.85rem; line-height: 1.4;">
+            <strong>⚠️ Prescription Verification Required</strong><br/>
+            This is a regulated prescription medicine. To complete purchase, you must upload an official prescription which will be reviewed by a licensed pharmacist before dispatch.
+          </div>
+        `
+            : `
+          <div class="alert alert-info" style="margin-bottom: 20px; font-size: 0.85rem; line-height: 1.4;">
+            <strong>ℹ️ Over-the-Counter Medicine</strong><br/>
+            This item does not require a prescription. Always consult a healthcare professional for persistent symptoms.
+          </div>
+        `
+        }
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid var(--border);">
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Unit Price</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">₹${med.price.toFixed(2)}</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button id="modal-close-btn" class="btn btn-outline">Close</button>
+            <button
+              id="modal-add-cart-btn"
+              class="btn btn-primary"
+              ${isOutOfStock ? 'disabled' : ''}
+            >
+              ${isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modalOverlay);
+
+    const closeModal = () => {
+      modalOverlay.remove();
+    };
+
+    modalOverlay.querySelector('#close-med-modal')?.addEventListener('click', closeModal);
+    modalOverlay.querySelector('#modal-close-btn')?.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+
+    modalOverlay.querySelector('#modal-add-cart-btn')?.addEventListener('click', () => {
+      cart.addItem(med, 1);
+      const btn = modalOverlay.querySelector('#modal-add-cart-btn') as HTMLButtonElement;
+      if (btn) {
+        btn.textContent = '✓ Added to Cart!';
+        btn.style.background = 'var(--success)';
+        setTimeout(() => {
+          closeModal();
+        }, 800);
+      }
+    });
+  };
+
   const loadMedicines = async () => {
     grid.innerHTML = `
       <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
@@ -85,15 +181,9 @@ export function renderMedicinesPage(container: HTMLElement) {
     `;
 
     try {
-      const res = await api.getMedicines(currentSearch, currentPage, pageSize);
-      let items = res.data;
-
-      // Filter client-side if tab is selected
-      if (currentFilter === 'otc') {
-        items = items.filter((m) => !m.requires_rx);
-      } else if (currentFilter === 'rx') {
-        items = items.filter((m) => m.requires_rx);
-      }
+      const rxParam = currentFilter === 'rx' ? true : currentFilter === 'otc' ? false : undefined;
+      const res = await api.getMedicines(currentSearch, currentPage, pageSize, rxParam);
+      const items = res.data;
 
       if (items.length === 0) {
         grid.innerHTML = `
@@ -105,6 +195,7 @@ export function renderMedicinesPage(container: HTMLElement) {
         `;
         prevBtn.disabled = true;
         nextBtn.disabled = true;
+        pageIndicator.textContent = `Page 1 of 1 (0 items)`;
         return;
       }
 
@@ -116,7 +207,7 @@ export function renderMedicinesPage(container: HTMLElement) {
           const stockLabel = isOutOfStock ? 'Out of Stock' : isLowStock ? `Low Stock (${med.stock_qty})` : `In Stock (${med.stock_qty})`;
 
           return `
-            <div class="card" data-med-id="${med.medicine_id}">
+            <div class="card medicine-card" data-med-id="${med.medicine_id}" style="cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;">
               <div class="card-header">
                 <span class="badge ${med.requires_rx ? 'badge-rx' : 'badge-otc'}">
                   ${med.requires_rx ? 'Rx Required' : 'OTC'}
@@ -132,15 +223,24 @@ export function renderMedicinesPage(container: HTMLElement) {
                 ${escapeHtml(med.description || 'Standard pharmaceutical preparation.')}
               </div>
 
-              <div class="card-footer">
-                <div class="price">$${med.price.toFixed(2)}</div>
-                <button
-                  class="btn btn-primary btn-sm add-cart-btn"
-                  data-med='${JSON.stringify(med).replace(/'/g, "&#39;")}'
-                  ${isOutOfStock ? 'disabled' : ''}
-                >
-                  ${isOutOfStock ? 'Unavailable' : 'Add to Cart'}
-                </button>
+              <div class="card-footer" style="margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border);">
+                <div class="price">₹${med.price.toFixed(2)}</div>
+                <div style="display: flex; gap: 6px;">
+                  <button
+                    class="btn btn-outline btn-sm view-details-btn"
+                    data-med='${JSON.stringify(med).replace(/'/g, "&#39;")}'
+                    title="View clinical details"
+                  >
+                    Info
+                  </button>
+                  <button
+                    class="btn btn-primary btn-sm add-cart-btn"
+                    data-med='${JSON.stringify(med).replace(/'/g, "&#39;")}'
+                    ${isOutOfStock ? 'disabled' : ''}
+                  >
+                    ${isOutOfStock ? 'Out' : 'Add'}
+                  </button>
+                </div>
               </div>
             </div>
           `;
@@ -150,15 +250,39 @@ export function renderMedicinesPage(container: HTMLElement) {
       // Attach add-to-cart handlers
       grid.querySelectorAll('.add-cart-btn').forEach((button) => {
         button.addEventListener('click', (e) => {
+          e.stopPropagation();
           const target = e.currentTarget as HTMLButtonElement;
           const medData = JSON.parse(target.getAttribute('data-med') || '{}');
           cart.addItem(medData, 1);
-          target.textContent = '✓ Added!';
+          target.textContent = '✓';
           target.style.background = 'var(--success)';
           setTimeout(() => {
-            target.textContent = 'Add to Cart';
+            target.textContent = 'Add';
             target.style.background = '';
           }, 1200);
+        });
+      });
+
+      // Attach view details modal handlers
+      grid.querySelectorAll('.view-details-btn').forEach((button) => {
+        button.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const target = e.currentTarget as HTMLButtonElement;
+          const medData = JSON.parse(target.getAttribute('data-med') || '{}');
+          showMedicineModal(medData);
+        });
+      });
+
+      // Card click opens modal
+      grid.querySelectorAll('.medicine-card').forEach((cardEl) => {
+        cardEl.addEventListener('click', (e) => {
+          // If click was on button, do nothing
+          if ((e.target as HTMLElement).closest('button')) return;
+          const btn = cardEl.querySelector('.view-details-btn') as HTMLButtonElement;
+          if (btn) {
+            const medData = JSON.parse(btn.getAttribute('data-med') || '{}');
+            showMedicineModal(medData);
+          }
         });
       });
 

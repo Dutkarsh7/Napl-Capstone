@@ -11,7 +11,7 @@ INSERT INTO users (user_id, name, email, password_hash, role)
 VALUES
     ('11111111-1111-1111-1111-111111111111', 'Admin Supervisor', 'admin@pharmacy.local', '$2a$10$xCsG76MlUtBqvm8l/egWuerylO9AgdW7Hm7NWBtbVs3K44kgZ8eU6', 'admin'),
     ('22222222-2222-2222-2222-222222222222', 'Pharmacist Sarah Jenkins', 'staff@pharmacy.local', '$2a$10$sog4oSPNv.qpLTBb872DeuWypoxlkvRERk4rmFldpYSeCBUUZbbsy', 'staff'),
-    ('33333333-3333-3333-3333-333333333333', 'John Doe (Customer)', 'customer@pharmacy.local', '$2a$10$.mFgHZ1EBw9x1YOhsyRzAuHTzu7bs0mftMKn8k74LtSU6h72U/mqC', 'customer')
+    ('33333333-3333-3333-3333-333333333333', 'Utkarsh Ans', 'customer@pharmacy.local', '$2a$10$.mFgHZ1EBw9x1YOhsyRzAuHTzu7bs0mftMKn8k74LtSU6h72U/mqC', 'customer')
 ON CONFLICT (email) DO NOTHING;
 
 -- Realistic Medicines (105 items)

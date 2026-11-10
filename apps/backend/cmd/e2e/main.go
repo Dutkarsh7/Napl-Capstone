@@ -67,7 +67,7 @@ func main() {
 		panic("No medicines found")
 	}
 	targetMed := medList.Data[0]
-	fmt.Printf("✓ Found: %s ($%.2f, Stock: %d, RequiresRx: %v)\n", targetMed.Name, targetMed.Price, targetMed.StockQty, targetMed.RequiresRx)
+	fmt.Printf("✓ Found: %s (₹%.2f, Stock: %d, RequiresRx: %v)\n", targetMed.Name, targetMed.Price, targetMed.StockQty, targetMed.RequiresRx)
 
 	// Step 3: Customer Uploads Prescription
 	fmt.Println("\n[Step 3] Uploading prescription document...")
@@ -134,7 +134,7 @@ func main() {
 	}
 	var createdOrder models.Order
 	_ = json.NewDecoder(rec.Body).Decode(&createdOrder)
-	fmt.Printf("✓ Order placed: #%s (Total: $%.2f, Status: %s)\n", createdOrder.OrderID, createdOrder.Total, createdOrder.Status)
+	fmt.Printf("✓ Order placed: #%s (Total: ₹%.2f, Status: %s)\n", createdOrder.OrderID, createdOrder.Total, createdOrder.Status)
 
 	// Step 6: Verify Stock Decrement
 	updatedMed, _ := store.GetMedicineByID(context.Background(), targetMed.MedicineID)

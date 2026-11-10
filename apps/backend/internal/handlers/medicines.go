@@ -38,7 +38,17 @@ func (h *MedicinesHandler) List(w http.ResponseWriter, r *http.Request) {
 		limit = 20
 	}
 
-	meds, total, err := h.store.ListMedicines(r.Context(), q, page, limit)
+	var rxFilter *bool
+	rxParam := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("rx")))
+	if rxParam == "true" {
+		t := true
+		rxFilter = &t
+	} else if rxParam == "false" {
+		f := false
+		rxFilter = &f
+	}
+
+	meds, total, err := h.store.ListMedicines(r.Context(), q, rxFilter, page, limit)
 	if err != nil {
 		JSONError(w, http.StatusInternalServerError, "Failed to query medicines catalog")
 		return

@@ -17,7 +17,7 @@ export function renderAuthPage(container: HTMLElement, isRegister: boolean = fal
           ${isRegister ? `
             <div class="form-group">
               <label for="reg-name">Full Name</label>
-              <input type="text" id="reg-name" class="form-input" placeholder="e.g. John Doe" required />
+              <input type="text" id="reg-name" class="form-input" placeholder="e.g. Utkarsh Ans" required />
             </div>
           ` : ''}
 
@@ -52,7 +52,7 @@ export function renderAuthPage(container: HTMLElement, isRegister: boolean = fal
           </p>
           <div style="display: flex; flex-direction: column; gap: 8px;">
             <button id="demo-customer-btn" class="btn btn-outline btn-sm" type="button">
-              👤 Login as Demo Customer (John Doe)
+              👤 Login as Demo Customer (Utkarsh Ans)
             </button>
             <button id="demo-staff-btn" class="btn btn-outline btn-sm" type="button" style="border-color: #93c5fd; color: #1e40af;">
               🩺 Login as Demo Pharmacist (Sarah Jenkins)
@@ -87,7 +87,7 @@ export function renderAuthPage(container: HTMLElement, isRegister: boolean = fal
       if (res.user.role === 'staff' || res.user.role === 'admin') {
         window.location.hash = '#/staff';
       } else {
-        window.location.hash = '#/medicines';
+        window.location.hash = '#/dashboard';
       }
     } catch (err: any) {
       showError(err.message || 'Login failed');
@@ -111,7 +111,7 @@ export function renderAuthPage(container: HTMLElement, isRegister: boolean = fal
 
         await api.register(name, email, password);
         window.dispatchEvent(new CustomEvent('auth-changed'));
-        window.location.hash = '#/medicines';
+        window.location.hash = '#/dashboard';
       } catch (err: any) {
         showError(err.message || 'Registration failed');
       } finally {

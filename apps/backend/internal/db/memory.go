@@ -109,13 +109,16 @@ func (m *MemoryStore) UpdateUserRole(ctx context.Context, id string, role models
 
 // Medicines
 
-func (m *MemoryStore) ListMedicines(ctx context.Context, query string, page, limit int) ([]models.Medicine, int, error) {
+func (m *MemoryStore) ListMedicines(ctx context.Context, query string, rxFilter *bool, page, limit int) ([]models.Medicine, int, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	var filtered []models.Medicine
 	q := strings.ToLower(strings.TrimSpace(query))
 	for _, med := range m.medicines {
+		if rxFilter != nil && med.RequiresRx != *rxFilter {
+			continue
+		}
 		if q == "" || strings.Contains(strings.ToLower(med.Name), q) || strings.Contains(strings.ToLower(med.GenericName), q) {
 			filtered = append(filtered, *med)
 		}
@@ -287,6 +290,23 @@ func (m *MemoryStore) CreateOrderWithItems(ctx context.Context, userID string, p
 	if len(items) == 0 {
 		return nil, errors.New("order must contain at least one item")
 	}
+
+	// Consolidate duplicate items for the same medicine_id
+	consolidated := make(map[string]int)
+	for _, it := range items {
+		if it.Quantity <= 0 {
+			return nil, errors.New("quantity must be greater than zero")
+		}
+		consolidated[it.MedicineID] += it.Quantity
+	}
+	var distinctItems []models.CreateOrderItemRequest
+	for medID, qty := range consolidated {
+		distinctItems = append(distinctItems, models.CreateOrderItemRequest{
+			MedicineID: medID,
+			Quantity:   qty,
+		})
+	}
+	items = distinctItems
 
 	// 1. Verify Rx items
 	requiresRx := false

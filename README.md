@@ -2,6 +2,8 @@
 
 A full-stack, distributed pharmacy management and prescription verification assistance platform developed as a University Capstone Project.
 
+> 📖 **Phase-II Capstone Documentation**: For the complete intermediate evaluation report, functional workflows, and verified UI screenshots, see [PHASE_II_DOCUMENTATION.md](PHASE_II_DOCUMENTATION.md).
+
 ---
 
 ## ⚕️ Critical Safety Framing
@@ -24,8 +26,8 @@ A full-stack, distributed pharmacy management and prescription verification assi
 | **Validation Microservice** | F# on .NET 8 / 10 + Giraffe | Domain modeling with discriminated unions (`Valid`, `Incomplete`, `Invalid`), pure functions, immutable rule evaluations, controlled substance flags, Expecto unit test suite. |
 | **OCR Microservice** | Python 3 + FastAPI | `pytesseract` and `Pillow` image processing with automatic fallback transcription and health checks. |
 | **Database** | PostgreSQL | Foreign key relationships, `CHECK` constraints, UUID primary keys, indices, automated migration scripts, and 105 realistic seed medicines. |
-| **Frontend** | Vanilla TypeScript + Vite | HTML5 + CSS3 (CSS custom properties), responsive card layouts, hash routing, drag-and-drop file upload with live status polling, fulfillment timeline stepper, cart state management. |
-| **Testing** | Go `testing`, Expecto, Vitest | 37 Go tests, 23 F# tests, and 8 Vitest tests (68+ total automated tests covering all state machines, stock concurrency, upload sniffing, and rule cases). |
+| **Frontend** | Vanilla TypeScript + Vite | HTML5 + CSS3 (CSS custom properties), responsive card layouts, hash routing, Customer Dashboard with order timeline, Medicine Details modal, drag-and-drop file upload with live status polling, fulfillment timeline stepper, cart state management. |
+| **Testing & CI** | Go `testing`, Expecto, Vitest, GitHub Actions | 40 Go unit/integration tests, 23 F# domain tests, and 8 Vitest tests (71 total automated tests covering all state machines, stock concurrency, upload sniffing, rule cases, and full CI pipeline). |
 
 ---
 
@@ -51,20 +53,25 @@ smart-pharmacy/
 │   └── database/migrations/     # PostgreSQL schema and seed migrations
 ├── tests/
 │   └── fixtures/prescriptions/  # Sample prescription fixtures
-├── docs/                        # Technical documentation
+├── docs/                        # Technical documentation & screenshots
+│   ├── screenshots/             # 9 genuine screenshots + 5 conceptual mockups
 │   ├── API.md
 │   └── TEST_CASES.md
 ├── docker-compose.yml          # Multi-service container orchestration
-├── scripts/start-all.ps1       # Windows local-development launcher
-├── .env.example               # Environment variables template
-└── README.md                  # This comprehensive guide
+├── scripts/
+│   ├── start-all.ps1            # Windows local-development launcher
+│   └── capture-phase2-screenshots.mjs # Automated Playwright screenshot script
+├── .github/workflows/ci.yml    # Continuous Integration pipeline
+├── .env.example                # Environment variables template
+├── PHASE_II_DOCUMENTATION.md   # Capstone Phase-II evaluation report
+└── README.md                   # This comprehensive guide
 ```
 
 ---
 
 ## Demo User Accounts
 
-The database seed (`002_seed.sql`) pre-populates three realistic demo users:
+The database seed (`infra/database/migrations/002_seed.sql`) pre-populates three realistic demo users:
 
 | Role | Email | Password | Intended Capabilities |
 |---|---|---|---|
@@ -130,7 +137,7 @@ npm run dev
 
 ## Running the Automated Test Suites
 
-### 1. Go Backend Tests (37 Unit & Handler Tests)
+### 1. Go Backend Tests (40 Unit & Handler Tests)
 Tests state machine transitions, stock decrement/cancellation concurrency logic, file upload content sniffing, JWT authentication middleware, and REST handlers:
 ```powershell
 cd apps\backend
@@ -160,6 +167,7 @@ Follow these steps to demonstrate the full application workflow:
 1. **Browse Medicines**:
    - Navigate to `http://localhost:5173/#/medicines`.
    - Use the debounced search bar to filter by active ingredient (e.g. type `amox` or `paracetamol`).
+   - Filter items using the `All Medicines`, `OTC Only`, and `Rx Only` buttons.
    - Notice the distinct badges: green `OTC` for over-the-counter items and red `Rx Required` for prescription drugs.
 
 2. **Upload a Prescription**:
@@ -187,15 +195,42 @@ Follow these steps to demonstrate the full application workflow:
    - Click **Place Order**.
    - The Go backend verifies the prescription is approved and owned by the user, decrements the medicine's stock quantity inside a database transaction (`SELECT ... FOR UPDATE`), and initializes the order status as `PLACED`.
 
-5. **Track Fulfillment Timeline**:
+5. **Customer Dashboard & 1-Click Reorder**:
+   - Go to **Dashboard** (`#/dashboard`).
+   - View active orders count, pending/approved prescriptions, and active cart count.
+   - Track active order fulfillment with live stepper progress.
+   - Click **Reorder Items** to automatically re-add medication items from previous orders into the cart.
+
+6. **Track Fulfillment Timeline**:
    - Go to **My Orders** (`#/orders`).
    - View the active order showing the fulfillment stepper: `PLACED` &rarr; `UNDER_REVIEW` &rarr; `CONFIRMED` &rarr; `READY` &rarr; `COMPLETED`.
 
-6. **Advance Order Fulfillment**:
+7. **Advance Order Fulfillment**:
    - Sign in as the pharmacist (`staff@pharmacy.local`).
    - Go to **Staff Dashboard** &rarr; **Order Fulfillment** tab.
    - Click **Mark Under Review**, then **Confirm Order**, then **Mark Ready**, and finally **Complete Order**.
    - If an order is **Cancelled**, the Go backend executes a transaction that automatically restores the reserved quantities back into inventory stock.
+
+---
+
+## 🤖 Autonomous End-to-End Test Runner
+
+To execute a complete headless verification of all 8 lifecycle steps in 2 seconds without clicking through the UI:
+
+```powershell
+cd apps\backend
+go run ./cmd/e2e
+```
+
+---
+
+## Continuous Integration
+
+A GitHub Actions workflow is configured at `.github/workflows/ci.yml` providing automated build and test pipelines across all 4 technology stacks:
+- **Go**: `go vet ./...`, `go test -v -race ./...`, `go build ./cmd/server` in `apps/backend`
+- **F#**: `dotnet restore`, `dotnet build`, `dotnet test Tests/Tests.fsproj` in `services/validation`
+- **Python**: Bytecode validation and module import smoke tests in `services/ocr`
+- **Frontend**: `npm test -- --run` (Vitest), `npm run build` (`tsc && vite build`) in `apps/frontend`
 
 ---
 

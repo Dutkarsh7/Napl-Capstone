@@ -18,7 +18,8 @@ var (
 	medItemRegex = regexp.MustCompile(`(?i)(?:(?:Rx|Tab|Cap)\s+)?([A-Za-z\s\-]+?)\s+(\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|IU|%))\s*(?:(?:x|qty|#|count|take)?\s*[:\-]?\s*(\d+))?`)
 )
 
-// ParsePrescriptionText extracts structured raw fields from OCR plain text
+// ParsePrescriptionText extracts structured raw fields from OCR plain text.
+// If any field cannot be reliably extracted, it remains nil to ensure clinical safety.
 func ParsePrescriptionText(text string) models.ParsedRawPrescription {
 	var result models.ParsedRawPrescription
 
@@ -88,10 +89,8 @@ func ParsePrescriptionText(text string) models.ParsedRawPrescription {
 						qty = &q
 					}
 				}
-				if qty == nil {
-					defaultQty := 10
-					qty = &defaultQty
-				}
+				// CRITICAL SAFETY: Never invent a quantity. If missing from OCR text,
+				// qty remains nil so the F# validation service flags it for pharmacist review.
 
 				result.Medicines = append(result.Medicines, models.ParsedRawMedicine{
 					Name:     &name,

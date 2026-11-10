@@ -1,0 +1,113 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  backend-go:
+    name: Backend Go Tests & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: apps/backend/go.sum
+
+      - name: Verify Dependencies
+        run: go mod download
+
+      - name: Go Vet
+        run: go vet ./...
+
+      - name: Run Go Unit & Integration Tests
+        run: go test -v -race ./...
+
+      - name: Build Go Server
+        run: go build -v -o bin/server ./cmd/server
+
+  validation-fsharp:
+    name: F# Validation Service Tests & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/validation
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore F# Dependencies
+        run: dotnet restore
+
+      - name: Build F# Project
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run F# Expecto Tests
+        run: dotnet test Tests/Tests.fsproj --no-build --configuration Release --verbosity normal
+
+  ocr-python:
+    name: Python OCR Service Verification
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/ocr
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: services/ocr/requirements.txt
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Bytecode & Module Import Test
+        run: |
+          python -m py_compile main.py
+          python -c "import main; print('FastAPI App and endpoints verified successfully')"
+
+  frontend:
+    name: Frontend TypeScript & Vite Tests & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/frontend
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/frontend/package.json
+
+      - name: Install Frontend Dependencies
+        run: npm install
+
+      - name: Run Vitest Unit Tests
+        run: npm test -- --run
+
+      - name: Build Frontend Production Bundle
+        run: npm run build

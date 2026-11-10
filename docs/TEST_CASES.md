@@ -57,3 +57,6 @@ This document details the test matrix covering all functional areas of the **AI-
 | **TC-51** | Frontend | Cart removes item and recalculates Rx requirement | `cart.requiresPrescription()` returns false when Rx item removed | Vitest `cart.test.ts` | PASS |
 | **TC-52** | Frontend | API client persists and removes JWT and user profile | LocalStorage correctly synced | Vitest `api.test.ts` | PASS |
 | **TC-53** | Admin | Admin updates customer role to `staff` | User role updated; pharmacist capabilities unlocked | Go `handlers_test.go` | PASS |
+| **TC-54** | Catalogue | Server-side Rx filtering (`rx=true` or `rx=false`) | Returns only prescription or OTC items with accurate total count | Go `medicines.go` & Frontend | PASS |
+| **TC-55** | Frontend | Medicine Details Modal display | Shows complete clinical description, Rx safety warning, and add-to-cart | Frontend `medicines.ts` | PASS |
+| **TC-56** | Frontend | Customer Dashboard & 1-Click Reorder | Shows active orders timeline, prescription statuses, and reorders past items into cart | Frontend `dashboard.ts` | PASS |

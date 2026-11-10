@@ -201,4 +201,35 @@ func TestOrderStockAndRxLogic(t *testing.T) {
 			t.Errorf("expected restored stock 10, got %d", medRestored.StockQty)
 		}
 	})
+
+	t.Run("Consolidates duplicate items for the same medicine in single order", func(t *testing.T) {
+		store, userID, otcID, _ := setupStore()
+
+		// Request 2 items with same medicine ID (2 + 3 = 5 total)
+		items := []models.CreateOrderItemRequest{
+			{MedicineID: otcID, Quantity: 2},
+			{MedicineID: otcID, Quantity: 3},
+		}
+
+		order, err := store.CreateOrderWithItems(ctx, userID, nil, items)
+		if err != nil {
+			t.Fatalf("expected order to succeed with consolidated items, got: %v", err)
+		}
+
+		if len(order.Items) != 1 {
+			t.Errorf("expected duplicate items to be consolidated into 1 row, got %d", len(order.Items))
+		}
+		if order.Items[0].Quantity != 5 {
+			t.Errorf("expected consolidated quantity 5, got %d", order.Items[0].Quantity)
+		}
+		if order.Total != 25.00 {
+			t.Errorf("expected total 25.00, got %.2f", order.Total)
+		}
+
+		// Verify stock was decremented by 5: 10 - 5 = 5
+		med, _ := store.GetMedicineByID(ctx, otcID)
+		if med.StockQty != 5 {
+			t.Errorf("expected stock 5, got %d", med.StockQty)
+		}
+	})
 }
